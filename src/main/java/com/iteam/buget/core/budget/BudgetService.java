@@ -40,6 +40,7 @@ public class BudgetService {
                 .stream().map(budgetMapper::toResponse).toList();
     }
 
+    @Transactional
     public BudgetResponse getById(User user, Long id) {
         Budget budget = findAndCheckAccess(user, id);
         return budgetMapper.toResponse(budget);
