@@ -1,10 +1,22 @@
+# yaml-language-server: $schema=https://json.schemastore.org/spring-boot-application-properties.json
+
 server:
   port: 8081
 
 spring:
   application:
     name: budget-service
-
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: learninge452@gmail.com
+    password: cudpeeulxrpjdgak
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   datasource:
     url: jdbc:postgresql://localhost:5432/budgetdb
     driver-class-name: org.postgresql.Driver
@@ -20,8 +32,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
 
-application:
+app:
   security:
     jwt:
       # Generate a secure key: openssl rand -base64 32

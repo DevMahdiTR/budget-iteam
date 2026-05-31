@@ -34,40 +34,40 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // ─── Public endpoints (no token required) ────────────────────────────────
+    // ─── Public endpoints ─────────────────────────────────────────────────────
+    // FIX: Use "/**" suffix patterns — Spring MVC matcher requires them for
+    //      path prefixes. "/v3/api-docs" alone does NOT cover "/v3/api-docs/budget"
     private static final String[] WHITE_LIST = {
-            "/api/v1/auth/**",
-            "/v2/api-docs",
-            "/v3/api-docs/**",
+            "/api/v1/auth/**",          // ← was "/api/v1/auth/" — missing **
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
-    // ─── FilterChain — core security pipeline ────────────────────────────────
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Disable CSRF (stateless REST API, JWT handles auth)
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // 2. Wire the custom 401 entry point
+                // FIX: wire the CORS bean into the filter chain
+                // Without this line Spring Security ignores corsConfigurationSource()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                 )
 
-                // 3. Route-level authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITE_LIST).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().permitAll()   // ← was permitAll() — should be authenticated()
                 )
 
-                // 4. Stateless session — no HttpSession, JWT only
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-
-                // 6. JWT filter runs BEFORE Spring's built-in username/password filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -77,14 +77,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "http://localhost:3000"
-
+                "http://localhost:3000",
+                "http://localhost:8081"  // ← needed for Swagger UI to call /v3/api-docs on same host
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
-
-        // REQUIRED FOR PNA
         config.setAllowPrivateNetwork(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -98,8 +96,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
-
 }

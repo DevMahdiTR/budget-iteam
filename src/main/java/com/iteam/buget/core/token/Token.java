@@ -3,16 +3,14 @@ package com.iteam.buget.core.token;
 
 import com.iteam.buget.core.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @Table(name = "tokens")
 @AllArgsConstructor
 @NoArgsConstructor

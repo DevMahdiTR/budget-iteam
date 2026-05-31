@@ -26,12 +26,6 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${application.security.jwt.secret-key}")
-    private String secretKey;
-
-    @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
-
     private final TokenRepository tokenRepository;
 
     // ─── Token Generation ────────────────────────────────────────────────────
@@ -41,6 +35,7 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        long jwtExpiration = 86400000L;
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
@@ -101,6 +96,7 @@ public class JwtService {
     // ─── Signing Key ─────────────────────────────────────────────────────────
 
     private Key getSigningKey() {
+        String secretKey = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
